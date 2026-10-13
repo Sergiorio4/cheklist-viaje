@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Checklist de Viaje</title>
+<style>
+@font-face{font-family:"Barlow Condensed";font-weight:500;font-style:normal;font-display:swap;src:url("fonts/barlow-condensed-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Barlow Condensed";font-weight:600;font-style:normal;font-display:swap;src:url("fonts/barlow-condensed-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"Barlow Condensed";font-weight:700;font-style:normal;font-display:swap;src:url("fonts/barlow-condensed-latin-700-normal.woff2") format("woff2")}
+@font-face{font-family:"Atkinson Hyperlegible";font-weight:400;font-style:normal;font-display:swap;src:url("fonts/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Atkinson Hyperlegible";font-weight:400;font-style:italic;font-display:swap;src:url("fonts/atkinson-hyperlegible-latin-400-italic.woff2") format("woff2")}
+@font-face{font-family:"Atkinson Hyperlegible";font-weight:700;font-style:normal;font-display:swap;src:url("fonts/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2")}
+[hidden]{display:none!important}
+html{-webkit-tap-highlight-color:transparent}
+/* Layout: a two-column "ficha de viaje" — trip setup on the left (sticky on desktop), the generated checklist on the right; stacks on phones. */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --surface-2:#f5f7f9; --ink:#17212b; --muted:#5b6876; --line:#d5dce3;
+  --accent:#e0a100; --accent-ink:#3a2a00; --accent-soft:#fff3cc;
+  --wind:#2c6fb0; --wind-soft:#e3eef8; --ok:#2f8a57; --ok-soft:#e2f3e9;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --surface-2:#1f2832; --ink:#e6ebf0; --muted:#9aa7b4; --line:#2e3a46;
+  --accent:#f2b51d; --accent-ink:#1d1500; --accent-soft:#3a2f10;
+  --wind:#6fa8de; --wind-soft:#1b2c3d; --ok:#5cc489; --ok-soft:#173226; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --surface-2:#1f2832; --ink:#e6ebf0; --muted:#9aa7b4; --line:#2e3a46;
+  --accent:#f2b51d; --accent-ink:#1d1500; --accent-soft:#3a2f10;
+  --wind:#6fa8de; --wind-soft:#1b2c3d; --ok:#5cc489; --ok-soft:#173226; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:.01em}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:16px 24px;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.shield{width:44px;height:50px;flex:none;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);
+  clip-path:polygon(0 0,100% 0,100% 72%,50% 100%,0 72%);font-family:var(--f-display);font-weight:700;font-size:18px;padding-bottom:8px}
+.brand h1{font-size:32px;line-height:1;font-weight:700;text-transform:uppercase}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:14px}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 14px;min-width:120px}
+.stat b{display:block;font-family:var(--f-display);font-size:26px;line-height:1.05;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+
+.grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
+
+/* setup panel */
+.setup{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:16px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:880px){.setup{position:static}}
+.setup h2{font-size:20px;text-transform:uppercase;font-weight:700}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label,.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.field input,.field select{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:5px 12px;cursor:pointer;font-size:14px;user-select:none}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.wind[aria-pressed="true"]{background:var(--wind);border-color:var(--wind);color:#fff}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.dur-auto{font-size:13px;color:var(--muted)}
+.dur-auto b{color:var(--ink)}
+
+/* toolbar */
+.main{display:flex;flex-direction:column;gap:14px;min-width:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:7px 12px;cursor:pointer;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:14px}
+.btn:hover{border-color:var(--muted)}
+.btn.warn{border-color:#c0392b;color:#c0392b}
+.spacer{flex:1}
+.sync{font-size:12px;color:var(--muted)}
+.toast{font-size:13px;color:var(--ok)}
+.confirm{display:inline-flex;gap:6px;align-items:center;font-size:14px}
+
+/* sections */
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.sec.wind{border-color:var(--wind)}
+.sec-h{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;user-select:none;border:0;background:transparent;width:100%;text-align:left}
+.sec-h h3{font-size:21px;font-weight:600;flex:1;min-width:0}
+.sec.wind .sec-h h3{color:var(--wind)}
+.tag{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+.count{font-family:var(--f-display);font-size:18px;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.sec.done .count{color:var(--ok)}
+.caret{transition:transform .2s;color:var(--muted)}
+.sec.closed .caret{transform:rotate(-90deg)}
+.sec.closed .sec-b{display:none}
+.sec-b{padding:0 16px 12px}
+.intro{background:var(--wind-soft);border-left:4px solid var(--wind);padding:10px 12px;border-radius:6px;font-size:14px;margin:0 0 10px}
+.sub{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;margin:12px 0 4px}
+.sec.wind .sub{color:var(--wind)}
+ul{list-style:none;margin:0;padding:0}
+li.it{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line)}
+li.it:first-child{border-top:0}
+li.it input{appearance:none;width:22px;height:22px;flex:none;border:2px solid var(--muted);border-radius:6px;margin:0;cursor:pointer;display:grid;place-items:center;background:var(--surface)}
+li.it input:checked{background:var(--ok);border-color:var(--ok)}
+li.it input:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+li.it label{cursor:pointer;flex:1;min-width:0}
+li.it .n{display:block;font-size:13px;color:var(--muted)}
+li.it.on label>span:first-child{text-decoration:line-through;text-decoration-color:var(--muted);color:var(--muted)}
+li.it .from{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px;margin-left:6px;white-space:nowrap}
+li.it .del{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0 4px}
+.hide-done li.it.on{display:none}
+.alldone{font-size:14px;color:var(--ok);padding:6px 0}
+.add{display:flex;gap:8px;margin-top:8px}
+.add input{flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:14px 16px;color:var(--muted);font-size:14px}
+textarea.copybox{width:100%;min-height:140px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px;color:var(--ink);font:13px/1.4 ui-monospace,monospace}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="shield" aria-hidden="true">RN</div>
+      <div><h1 id="title">Checklist de viaje</h1><p id="subtitle">Configurá el viaje y la lista se arma sola</p></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>Salida</span><b id="countdown">—</b></div>
+      <div class="stat"><span>Listo</span><b id="pct">0 %</b><div class="bar"><i id="barfill"></i></div></div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <aside class="setup" aria-label="Datos del viaje">
+      <h2>Datos del viaje</h2>
+      <div class="field"><label for="f-dest">Destino</label><input id="f-dest" placeholder="Ej.: El Calafate"></div>
+      <div class="row2">
+        <div class="field"><label for="f-ida">Salida</label><input id="f-ida" type="date"></div>
+        <div class="field"><label for="f-vuelta">Regreso</label><input id="f-vuelta" type="date"></div>
+      </div>
+      <div class="field">
+        <label for="f-dur">Duración</label>
+        <select id="f-dur">
+          <option value="auto">Según las fechas</option>
+          <option value="dia">Escapada de un día</option>
+          <option value="finde">Fin de semana (2 a 3 días)</option>
+          <option value="vac">Vacaciones (4 días o más)</option>
+        </select>
+        <span class="dur-auto" id="dur-auto"></span>
+      </div>
+      <div class="field">
+        <span class="lbl">Clima y tipo de destino</span>
+        <div class="chips" id="chips-dest"></div>
+        <p class="hint">Podés marcar varios. Por ejemplo, Patagonia + Montaña en invierno para Bariloche en julio, o Sierras para Córdoba en enero.</p>
+      </div>
+      <div class="field">
+        <span class="lbl">Cómo viajan</span>
+        <div class="chips" id="chips-extra"></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Ordenar">
+          <button id="v-sec" aria-pressed="true">Por sección</button>
+          <button id="v-mom" aria-pressed="false">Por momento</button>
+        </div>
+        <button class="btn" id="b-hide" aria-pressed="false">Ocultar tildados</button>
+        <button class="btn" id="b-copy">Compartir pendientes</button>
+        <span class="spacer"></span>
+        <span class="sync" id="sync"></span>
+        <span id="reset-zone"><button class="btn" id="b-reset">Nuevo viaje</button></span>
+      </div>
+      <div id="copy-zone" hidden></div>
+      <div id="list"></div>
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+// ---------- datos ----------
+// I(texto, nota, momento, condición). momento: sem = una semana antes, dias = 1–2 días antes, sal = día de salida, via = durante el viaje
+const I=(t,n,w,c)=>({t,n:n||'',w:w||null,c:c||null});
+const A=s=>s.ex.auto, X=s=>s.ex.ext, K=s=>s.ex.kids, P=s=>s.ex.pet, C=s=>s.ex.camp;
+
+const DEST=[
+  {id:'playa',label:'Playa / Costa'},
+  {id:'sierras',label:'Sierras / Montaña en verano'},
+  {id:'montana',label:'Montaña en invierno / Nieve'},
+  {id:'patagonia',label:'Patagonia / viento',wind:true},
+  {id:'campo',label:'Campo / Naturaleza'},
+  {id:'ciudad',label:'Ciudad'},
+  {id:'calido',label:'Cálido / Selva'},
+];
+const EXTRA=[
+  {id:'auto',label:'En auto propio'},
+  {id:'kids',label:'Con chicos'},
+  {id:'pet',label:'Con mascota'},
+  {id:'camp',label:'Acampando'},
+  {id:'ext',label:'Cruzan a Chile / exterior'},
+];
+
+const SECTIONS=[
+ {id:'doc',title:'Documentación',w:'sem',groups:[{items:[
+   I('DNI de todos los viajeros','incluidos los menores'),
+   I('Licencia de conducir vigente','de cada persona que vaya a manejar',null,A),
+   I('Cédula verde del vehículo','o cédula azul / autorización si quien maneja no es el titular',null,A),
+   I('Seguro del vehículo vigente','con el teléfono de auxilio de la aseguradora a mano',null,A),
+   I('VTV / RTO vigente','oblea y comprobante',null,A),
+   I('Credencial de obra social o prepaga','y teléfono de urgencias'),
+   I('Reservas de alojamiento y actividades','impresas o descargadas en el celular'),
+ ]}]},
+ {id:'veh',title:'Revisión del vehículo',w:'dias',c:A,groups:[
+   {sub:'Mecánica básica',items:[
+     I('Service al día (aceite y filtros)','si está por vencer, hacerlo antes de salir','sem'),
+     I('Niveles: aceite, refrigerante, líquido de frenos y agua del limpiaparabrisas'),
+     I('Presión y estado de los neumáticos, incluido el auxilio'),
+     I('Batería en buen estado','bornes limpios y ajustados'),
+     I('Luces: bajas, altas, freno, giros, marcha atrás y balizas'),
+     I('Escobillas del limpiaparabrisas'),
+   ]},
+   {sub:'Seguridad y emergencia',items:[
+     I('Matafuegos cargado y vigente'),
+     I('Balizas triangulares (2) y chaleco reflectivo'),
+     I('Gato, llave de ruedas y llave de seguridad de las tuercas'),
+     I('Cables para puentear batería y eslinga de remolque'),
+     I('Linterna con pilas de repuesto'),
+     I('Botiquín básico','curitas, gasas, alcohol en gel, analgésicos, antihistamínicos, repelente, protector solar'),
+   ]},
+ ]},
+ {id:'ruta',title:'Plan de ruta y logística',w:'dias',groups:[{items:[
+   I('Ruta principal y alternativa definidas',null,'sem',A),
+   I('Estado de rutas consultado','Vialidad Nacional / Provincial: cortes, obras, ripio','dias',A),
+   I('Pronóstico y alertas revisados','Servicio Meteorológico Nacional (SMN), 24 a 48 h antes'),
+   I('Estaciones de servicio ubicadas en el trayecto','y la autonomía del auto entre una y otra',null,A),
+   I('Paradas de descanso cada 2 a 3 horas',null,null,A),
+   I('Hospitales, clínicas o farmacias en el trayecto y el destino'),
+   I('Itinerario compartido con alguien que no viaja',null,'sal'),
+   I('Reservas confirmadas y horarios de check-in anotados'),
+ ]}]},
+ {id:'cel',title:'Celular y comunicación',w:'dias',groups:[{items:[
+   I('Celular cargado al 100 %',null,'sal'),
+   I('Cargador USB para el auto y cable',null,null,A),
+   I('Batería externa cargada',null,'sal'),
+   I('Mapas descargados sin conexión','Google Maps, Maps.me u OsmAnd'),
+   I('Teléfonos útiles guardados','911 policía · 107 emergencias · 100 bomberos · aseguradora · alojamiento'),
+   I('Los mismos teléfonos y direcciones anotados en papel','por si no hay señal o batería'),
+ ]}]},
+ {id:'plata',title:'Dinero',w:'dias',groups:[{items:[
+   I('Efectivo en billetes chicos','peajes, puestos de ruta, pueblos pequeños'),
+   I('Tarjetas de débito y crédito, y billetera virtual con saldo'),
+   I('Presupuesto estimado con margen para imprevistos',null,'sem'),
+ ]}]},
+ {id:'base',title:'Equipaje base',w:'dias',groups:[{items:[
+   I('Ropa adecuada al clima del destino','en capas si la temperatura varía'),
+   I('Calzado cómodo para caminar'),
+   I('Agua y snacks para el camino',null,'sal'),
+   I('Bolsas para residuos'),
+   I('Anteojos de sol y gorra o sombrero'),
+   I('Neceser de aseo y medicamentos de uso personal'),
+   I('Entretenimiento para el viaje','música, podcasts, audiolibros, juegos'),
+ ]}]},
+
+ // duración
+ {id:'d-dia',title:'Escapada de un día',tag:'Duración',w:'dias',dur:'dia',groups:[{items:[
+   I('Mochila chica y cómoda'),
+   I('Botella de agua reutilizable y snacks'),
+   I('Vianda o efectivo para comer',null,'sal'),
+   I('Abrigo liviano','rompevientos o campera fina'),
+   I('Protector solar, anteojos de sol y repelente'),
+   I('Bolsa de tela plegable'),
+   I('Traje de baño y toalla de microfibra','opcional, según el destino'),
+ ]}]},
+ {id:'d-finde',title:'Fin de semana',tag:'Duración',w:'dias',dur:'finde',groups:[{items:[
+   I('Ropa por día + 1 muda extra','ropa interior, medias, pijama'),
+   I('Neceser completo'),
+   I('2 pares de calzado','uno cómodo y uno más prolijo'),
+   I('Medicamentos de uso diario','con un par de días de margen'),
+   I('Bolsa para ropa sucia'),
+   I('Cargador de celular y zapatilla o adaptador de enchufe'),
+   I('Llave de repuesto de la casa'),
+ ]}]},
+ {id:'d-vac',title:'Vacaciones',tag:'Duración',w:'dias',dur:'vac',groups:[
+   {items:[
+     I('Ropa planificada según si va a haber posibilidad de lavar'),
+     I('Neceser completo','afeitadora, productos de pelo, maquillaje'),
+     I('Botiquín ampliado','termómetro, antidiarreicos, sales de rehidratación, recetas médicas'),
+     I('Entretenimiento para días de lluvia','libros, tablet con contenido descargado, juegos de mesa'),
+     I('Asistencia al viajero','sobre todo para el exterior o zonas alejadas','sem'),
+     I('Copia de los documentos en papel y en la nube',null,'sem'),
+   ]},
+   {sub:'Antes de cerrar la casa',w:'sal',items:[
+     I('Sacar la basura y vaciar la heladera de perecederos'),
+     I('Desenchufar los electrodomésticos que no hagan falta'),
+     I('Cerrar las llaves de paso de gas y agua'),
+     I('Luces con temporizador o avisar a un vecino o familiar',null,'dias'),
+     I('Dejar una llave de repuesto a una persona de confianza',null,'dias'),
+   ]},
+ ]},
+
+ // destinos
+ {id:'playa',title:'Playa / Costa',tag:'Destino',w:'dias',dest:'playa',groups:[{items:[
+   I('Protector solar FPS alto resistente al agua y crema post-solar'),
+   I('Al menos 2 trajes de baño'),
+   I('Toalla de playa o de microfibra'),
+   I('Sombrero de ala ancha y anteojos de sol polarizados'),
+   I('Ojotas, alpargatas y calzado para el agua'),
+   I('Bolsa estanca para celular y documentos'),
+   I('Ropa liviana de secado rápido'),
+   I('Rompevientos liviano','en la costa atlántica a la tarde suele soplar viento fresco'),
+ ]}]},
+ {id:'sierras',title:'Sierras / Montaña en verano',tag:'Destino',w:'dias',dest:'sierras',
+  intro:'En las sierras y la montaña en verano hace calor al sol y refresca mucho a la tarde y a la noche. Las tormentas suelen llegar después del mediodía y pueden hacer crecer ríos y arroyos en pocos minutos.',
+  groups:[
+   {sub:'Ropa y calzado',items:[
+     I('Ropa liviana y fresca para el día'),
+     I('Abrigo para la noche','buzo o polar y campera liviana: la temperatura baja mucho'),
+     I('Campera impermeable liviana o poncho','para las tormentas de la tarde'),
+     I('Calzado de trekking o zapatillas con buena suela','ya usado, no nuevo'),
+     I('Traje de baño, ojotas y toalla de microfibra','para ríos, arroyos y ollas'),
+     I('Sombrero o gorra con visera y anteojos de sol'),
+   ]},
+   {sub:'Cuidado personal y caminatas',items:[
+     I('Protector solar FPS alto y labial con FPS','en altura el sol quema más rápido'),
+     I('Repelente de insectos'),
+     I('Agua abundante para las caminatas','más de lo que parece necesario'),
+     I('Mochila de día con snacks, botiquín chico y linterna'),
+     I('Bastones de trekking si hay subidas largas'),
+     I('Avisar el recorrido y la hora de regreso antes de salir a caminar',null,'via'),
+   ]},
+   {sub:'Seguridad en verano',items:[
+     I('Revisar el pronóstico de tormentas cada día','salir temprano y volver antes de la tarde','via'),
+     I('Alejarse de ríos y arroyos si llueve arriba','las crecidas llegan de golpe, aunque donde estás no llueva','via'),
+     I('Con tormenta eléctrica, bajar de cumbres y zonas abiertas',null,'via'),
+     I('No hacer fuego fuera de lugares habilitados','en verano el riesgo de incendio es alto','via'),
+     I('En bajadas largas, usar el freno motor',null,'via',A),
+   ]},
+ ]},
+ {id:'montana',title:'Montaña en invierno / Nieve',tag:'Destino',w:'dias',dest:'montana',groups:[
+   {sub:'Sistema de capas',items:[
+     I('Capa 1 (piel): ropa térmica que transpire','evitar el algodón'),
+     I('Capa 2 (aislante): polar, sweater de lana o campera de pluma'),
+     I('Capa 3 (exterior): campera impermeable y cortaviento'),
+   ]},
+   {sub:'Accesorios y vehículo',items:[
+     I('Gorro de lana, guantes y cuello polar o bufanda'),
+     I('Botas impermeables con buena suela'),
+     I('Protector solar y labial con FPS','la nieve refleja el sol'),
+     I('Termo con bebida caliente',null,'sal'),
+     I('Anticongelante revisado y cadenas para nieve','practicar ponerlas antes de salir','sem',A),
+     I('Estado de pasos y rutas de montaña consultado','pueden cerrarse por nieve','sal'),
+   ]},
+ ]},
+ {id:'patagonia',title:'Patagonia / Sur argentino (viento fuerte)',tag:'Destino',wind:true,w:'dias',dest:'patagonia',
+  intro:'El viento del oeste es constante y en primavera y verano las ráfagas pueden superar los 100 km/h. El tiempo cambia rápido, las distancias entre pueblos son largas y en muchos tramos no hay señal. El viento suele calmar de noche y a primera hora, y aumentar después del mediodía.',
+  groups:[
+   {sub:'Ropa y cuidado personal',items:[
+     I('Campera cortaviento con capucha ajustable','aunque el pronóstico diga sol'),
+     I('Ropa en capas','la sensación térmica con viento es mucho más baja que la temperatura'),
+     I('Gorro que no se vuele y cuello polar','con ajuste o tipo pasamontañas'),
+     I('Pantalón cortaviento o calza térmica'),
+     I('Anteojos de sol envolventes','protegen del sol y del polvo que levanta el viento'),
+     I('Protector solar FPS alto','la radiación UV es intensa, sobre todo en primavera'),
+     I('Protector labial y crema humectante','el viento reseca piel y labios'),
+     I('Gotas lubricantes para los ojos'),
+     I('Guantes livianos, incluso en verano'),
+   ]},
+   {sub:'Vehículo y manejo con viento',c:A,items:[
+     I('Cargar combustible en cada estación','puede haber más de 200 km entre una y otra, y el viento en contra aumenta el consumo','via'),
+     I('Bidón homologado de combustible de reserva, bien sujeto'),
+     I('Velocidad moderada y las dos manos en el volante','las ráfagas laterales desplazan el auto al salir de un reparo, en puentes y al cruzarse con camiones','via'),
+     I('Nada de carga alta en el techo','si se usa portaequipajes, carga baja y bien amarrada'),
+     I('Abrir las puertas sujetándolas firme','una ráfaga puede doblar la bisagra; estacionar con la trompa hacia el viento','via'),
+     I('Ripio: velocidad baja y auxilio en buen estado','en tramos largos, considerar un segundo auxilio'),
+     I('Seguro con cobertura de cristales y filtro de aire limpio','piedras y polvo del ripio','sem'),
+     I('Atención a animales sueltos en la ruta','guanacos, ñandúes, ovejas; sobre todo al amanecer y al atardecer','via'),
+   ]},
+   {sub:'Logística en el sur',items:[
+     I('Alertas por viento del SMN antes de cada tramo','si hay alerta, salir temprano o reprogramar','via'),
+     I('Etapas cortas y llegar de día','muchos tramos no tienen señal ni servicios','sem'),
+     I('Agua, comida y una manta extra en el auto',null,'sal',A),
+     I('Para llegar por tierra a Tierra del Fuego hay que cruzar por Chile','ver la sección de cruce a Chile / exterior','sem'),
+     I('Cruces en balsa (Estrecho de Magallanes)','pueden suspenderse por viento: prever demoras','via'),
+   ]},
+   {sub:'Camping con viento',c:C,items:[
+     I('Carpa baja con estacas largas y tensores de repuesto'),
+     I('Armar al reparo y con la puerta del lado opuesto al viento',null,'via'),
+     I('Fuego solo en lugares habilitados y nunca con viento','preferir anafe con protector','via'),
+     I('Todo lo suelto atado o guardado','el viento se lleva bolsas, gorras y residuos','via'),
+     I('Bastones de trekking para senderos expuestos'),
+   ]},
+ ]},
+ {id:'campo',title:'Campo / Rural / Naturaleza',tag:'Destino',w:'dias',dest:'campo',groups:[{items:[
+   I('Repelente de insectos de alta potencia y crema calmante'),
+   I('Calzado cerrado, resistente y fácil de limpiar'),
+   I('Linterna frontal o de mano','con pilas de repuesto'),
+   I('Ropa de colores neutros'),
+   I('Navaja multiuso'),
+   I('Bolsas de residuos reforzadas'),
+   I('Impermeable liviano o poncho'),
+ ]}]},
+ {id:'ciudad',title:'Ciudad / Urbano',tag:'Destino',w:'dias',dest:'ciudad',groups:[{items:[
+   I('Zapatillas cómodas (ya usadas, no nuevas)'),
+   I('Bolso cruzado, riñonera o mochila chica con cierres seguros'),
+   I('Batería externa y cargador'),
+   I('App o tarjeta de transporte público local','SUBE u otra según la ciudad'),
+   I('Ropa versátil para el día y la noche'),
+ ]}]},
+ {id:'calido',title:'Clima cálido / Subtropical / Selva',tag:'Destino',w:'dias',dest:'calido',groups:[{items:[
+   I('Ropa holgada, transpirable y de secado rápido','con mangas largas livianas para la tarde'),
+   I('Repelente con DEET o icaridina'),
+   I('Mosquitero portátil','si el alojamiento es rústico'),
+   I('Sales de rehidratación o sobres de electrolitos'),
+   I('Botiquín con antidiarreicos y antihistamínicos'),
+ ]}]},
+
+ // extras
+ {id:'kids',title:'Viajando con chicos',tag:'Viajeros',w:'dias',c:K,groups:[{items:[
+   I('Butaca o booster según edad y peso, bien instalada',null,'sem',A),
+   I('Muda de ropa extra a mano en el auto',null,'sal'),
+   I('Snacks, agua y juegos para el camino',null,'sal'),
+   I('Medicamentos pediátricos y termómetro'),
+   I('Paradas más frecuentes previstas en la ruta',null,null,A),
+   I('Autorización de viaje si un menor sale del país sin ambos padres','se tramita con anticipación','sem',X),
+ ]}]},
+ {id:'pet',title:'Viajando con mascota',tag:'Viajeros',w:'dias',c:P,groups:[{items:[
+   I('Alojamiento que acepte mascotas confirmado',null,'sem'),
+   I('Libreta de vacunas al día (antirrábica)',null,'sem'),
+   I('Certificado veterinario para cruzar la frontera','consultar requisitos de SENASA con tiempo','sem',X),
+   I('Correa, collar con chapita y teléfono'),
+   I('Comida, agua y recipientes'),
+   I('Cama o manta, y bolsitas para residuos'),
+   I('Arnés o transportadora para el auto',null,null,A),
+ ]}]},
+ {id:'camp',title:'Camping',tag:'Alojamiento',w:'dias',c:C,groups:[{items:[
+   I('Carpa probada en casa (varillas, estacas, tensores)',null,'sem'),
+   I('Bolsa de dormir acorde a la temperatura mínima del destino'),
+   I('Aislante o colchoneta'),
+   I('Anafe, garrafa o cartucho, y encendedor'),
+   I('Vajilla, olla, cubiertos y detergente biodegradable'),
+   I('Linterna frontal para cada persona'),
+   I('Reserva o lugar habilitado confirmado',null,'sem'),
+ ]}]},
+ {id:'ext',title:'Cruce a Chile / exterior',tag:'Frontera',w:'sem',c:X,groups:[{items:[
+   I('DNI vigente de cada viajero (o pasaporte según el país)'),
+   I('Seguro del auto con cobertura en el país de destino',null,null,A),
+   I('Autorización certificada para manejar el auto si no es tuyo',null,null,A),
+   I('Asistencia al viajero con cobertura en el exterior'),
+   I('Horarios y estado del paso fronterizo consultados','pueden cerrarse por nieve o viento','sal'),
+   I('No llevar frutas, verduras, carnes ni lácteos','controles sanitarios en la frontera','sal'),
+   I('Tarjeta habilitada para el exterior y algo de moneda local',null,'dias'),
+   I('Datos móviles o roaming resuelto',null,'dias'),
+ ]}]},
+];
+
+const MOMENTS=[
+  {id:'sem',title:'Una semana antes',off:7},
+  {id:'dias',title:'1 a 2 días antes',off:1},
+  {id:'sal',title:'El día de salida',off:0},
+  {id:'via',title:'Durante el viaje',off:null},
+];
+
+// ---------- estado ----------
+const KEY='checklist-viaje-v1';
+const fresh=()=>({trip:{dest:'',ida:'',vuelta:''},dur:'auto',dests:[],ex:{auto:true,kids:false,pet:false,camp:false,ext:false},
+  checked:{},custom:[],view:'sec',hide:false,closed:{},updated:0});
+let S=fresh();
+try{const raw=localStorage.getItem(KEY); if(raw) S=Object.assign(fresh(),JSON.parse(raw));}catch(e){}
+
+function hash(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return (h>>>0).toString(36)}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function parseD(v){if(!v)return null;const [y,m,d]=v.split('-').map(Number);return new Date(y,m-1,d)}
+function today(){const t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate())}
+const DAY=86400000;
+const fmt=d=>d.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'numeric'});
+
+function autoDur(){
+  const a=parseD(S.trip.ida),b=parseD(S.trip.vuelta);
+  if(!a||!b||b<a) return null;
+  const n=Math.round((b-a)/DAY);
+  return n===0?'dia':(n<=3?'finde':'vac');
+}
+function curDur(){return S.dur==='auto'?(autoDur()||'finde'):S.dur}
+
+// arma la lista visible
+function build(){
+  const dur=curDur(); const out=[];
+  for(const sec of SECTIONS){
+    if(sec.dur && sec.dur!==dur) continue;
+    if(sec.dest && !S.dests.includes(sec.dest)) continue;
+    if(sec.c && !sec.c(S)) continue;
+    const groups=[];
+    for(const g of sec.groups){
+      if(g.c && !g.c(S)) continue;
+      const items=g.items.filter(it=>!it.c||it.c(S)).map(it=>({...it,id:hash(sec.id+'|'+it.t),w:it.w||g.w||sec.w,sec:sec.title}));
+      if(items.length) groups.push({sub:g.sub,items});
+    }
+    if(groups.length) out.push({...sec,groups});
+  }
+  const cust=S.custom.map(c=>({t:c.t,n:'',id:c.id,w:'dias',sec:'Mis ítems',custom:true}));
+  out.push({id:'mine',title:'Mis ítems',tag:'Propios',groups:[{items:cust}],custom:true});
+  return out;
+}
+
+// ---------- render ----------
+function itemHTML(it,showFrom){
+  const on=!!S.checked[it.id];
+  return `<li class="it${on?' on':''}"><input type="checkbox" id="c-${it.id}" data-id="${it.id}"${on?' checked':''}>
+    <label for="c-${it.id}"><span>${esc(it.t)}</span>${showFrom?`<span class="from">${esc(it.sec)}</span>`:''}${it.n?`<span class="n">${esc(it.n)}</span>`:''}</label>
+    ${it.custom?`<button class="del" data-del="${it.id}" aria-label="Quitar ${esc(it.t)}">×</button>`:''}</li>`;
+}
+function secHTML(key,title,tag,groups,opts={}){
+  const all=groups.flatMap(g=>g.items); const done=all.filter(i=>S.checked[i.id]).length;
+  const complete=all.length&&done===all.length; const closed=!!S.closed[key];
+  let body='';
+  if(opts.intro) body+=`<p class="intro">${esc(opts.intro)}</p>`;
+  for(const g of groups){
+    if(g.sub) body+=`<div class="sub">${esc(g.sub)}</div>`;
+    body+=`<ul>${g.items.map(i=>itemHTML(i,opts.from)).join('')}</ul>`;
+  }
+  if(S.hide&&complete) body+=`<div class="alldone">Todo listo en esta sección.</div>`;
+  if(opts.custom) body+=`<form class="add" data-add><input id="new-item" placeholder="Agregar un ítem propio" aria-label="Nuevo ítem"><button class="btn">Agregar</button></form>`;
+  return `<section class="sec${opts.wind?' wind':''}${complete?' done':''}${closed?' closed':''}">
+    <button class="sec-h" data-tog="${key}" aria-expanded="${!closed}"><span class="caret" aria-hidden="true">▾</span><h3>${esc(title)}</h3>${tag?`<span class="tag">${esc(tag)}</span>`:''}<span class="count">${done}/${all.length}</span></button>
+    <div class="sec-b">${body}</div></section>`;
+}
+
+function render(){
+  // controles
+  $('f-dest').value!==S.trip.dest && document.activeElement!==$('f-dest') && ($('f-dest').value=S.trip.dest);
+  $('f-ida').value=S.trip.ida; $('f-vuelta').value=S.trip.vuelta; $('f-dur').value=S.dur;
+  const ad=autoDur(); const names={dia:'escapada de un día',finde:'fin de semana',vac:'vacaciones'};
+  $('dur-auto').innerHTML=S.dur==='auto'?(ad?`Detectado: <b>${names[ad]}</b>`:'Cargá las fechas o elegí la duración. Por ahora: <b>fin de semana</b>.'):'';
+  $('chips-dest').innerHTML=DEST.map(d=>`<button class="chip${d.wind?' wind':''}" data-dest="${d.id}" aria-pressed="${S.dests.includes(d.id)}">${d.label}</button>`).join('');
+  $('chips-extra').innerHTML=EXTRA.map(d=>`<button class="chip" data-ex="${d.id}" aria-pressed="${!!S.ex[d.id]}">${d.label}</button>`).join('');
+  $('v-sec').setAttribute('aria-pressed',S.view==='sec'); $('v-mom').setAttribute('aria-pressed',S.view==='mom');
+  $('b-hide').setAttribute('aria-pressed',S.hide); $('b-hide').textContent=S.hide?'Mostrar tildados':'Ocultar tildados';
+  $('list').classList.toggle('hide-done',S.hide);
+
+  $('title').textContent=S.trip.dest?('Viaje a '+S.trip.dest):'Checklist de viaje';
+  const a=parseD(S.trip.ida),b=parseD(S.trip.vuelta);
+  $('subtitle').textContent=a?(fmt(a)+(b?' al '+fmt(b):'')):'Configurá el viaje y la lista se arma sola';
+  let cd='—';
+  if(a){const n=Math.round((a-today())/DAY);
+    if(n>1)cd='Faltan '+n+' días'; else if(n===1)cd='Mañana'; else if(n===0)cd='Hoy';
+    else if(b&&today()<=b)cd='En viaje'; else cd='Terminado';}
+  $('countdown').textContent=cd;
+
+  const secs=build(); const all=secs.flatMap(s=>s.groups.flatMap(g=>g.items));
+  const done=all.filter(i=>S.checked[i.id]).length; const pct=all.length?Math.round(done*100/all.length):0;
+  $('pct').textContent=pct+' %'; $('barfill').style.width=pct+'%';
+
+  let html='';
+  if(!S.dests.length) html+=`<div class="empty">Elegí el clima o tipo de destino a la izquierda para sumar los ítems específicos (playa, montaña, Patagonia con viento, etc.).</div>`;
+  if(S.view==='sec'){
+    html+=secs.map(s=>secHTML(s.id,s.title,s.tag,s.groups,{intro:s.intro,wind:s.wind,custom:s.custom})).join('');
+  }else{
+    for(const m of MOMENTS){
+      const items=all.filter(i=>i.w===m.id); if(!items.length&&m.id!=='dias') continue;
+      let title=m.title;
+      if(a&&m.off!==null){const d=new Date(a.getTime()-m.off*DAY); title+=' · '+(m.off===0?fmt(d):'hasta el '+fmt(d));}
+      html+=secHTML('m-'+m.id,title,null,[{items}],{from:true,custom:m.id==='dias'});
+    }
+  }
+  $('list').innerHTML=html;
+}
+
+// ---------- guardar ----------
+let docRef=null, timer=null, writing=false, again=false;
+function save(){
+  S.updated=Date.now();
+  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+  if(docRef){clearTimeout(timer);timer=setTimeout(push,700)}
+}
+async function push(){
+  if(writing){again=true;return}
+  writing=true; $('sync').textContent='Guardando…';
+  try{await docRef.set({state:JSON.parse(JSON.stringify(S)),updated:S.updated}); $('sync').textContent='Guardado en tu cuenta';}
+  catch(e){$('sync').textContent='Guardado solo en este dispositivo'; if(e&&e.code==='invalid_argument') docRef=null;}
+  writing=false; if(again){again=false;push()}
+}
+async function initSync(){
+  try{
+    if(!window.claude||!window.claude.use) return;
+    const [db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);
+    if(!db||!user) return;
+    const id=await user.id(); if(!id) return;
+    docRef=db.doc('data/users/'+id+'/viaje');
+    let first=true;
+    docRef.onSnapshot(snap=>{
+      if(snap.metadata.hasPendingWrites) return;
+      const d=snap.exists?snap.data():null;
+      if(d&&d.state&&(d.updated||0)>(S.updated||0)){S=Object.assign(fresh(),JSON.parse(JSON.stringify(d.state)));try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){} render();}
+      else if(first&&(!d||(d.updated||0)<(S.updated||0))&&S.updated){push();}
+      if(first) $('sync').textContent='Guardado en tu cuenta';
+      first=false;
+    },()=>{docRef=null;$('sync').textContent='Guardado solo en este dispositivo'});
+  }catch(e){}
+}
+
+// ---------- eventos ----------
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.matches('li.it input')){S.checked[t.dataset.id]=t.checked; if(!t.checked) delete S.checked[t.dataset.id]; save(); render(); return;}
+  if(t.id==='f-ida'||t.id==='f-vuelta'){S.trip[t.id==='f-ida'?'ida':'vuelta']=t.value; save(); render();}
+  if(t.id==='f-dur'){S.dur=t.value; save(); render();}
+});
+$('f-dest').addEventListener('input',e=>{S.trip.dest=e.target.value; save();
+  $('title').textContent=S.trip.dest?('Viaje a '+S.trip.dest):'Checklist de viaje';});
+document.addEventListener('click',e=>{
+  const c=e.target.closest('[data-dest]');
+  if(c){const id=c.dataset.dest; S.dests=S.dests.includes(id)?S.dests.filter(x=>x!==id):[...S.dests,id]; save(); render(); return;}
+  const x=e.target.closest('[data-ex]');
+  if(x){S.ex[x.dataset.ex]=!S.ex[x.dataset.ex]; save(); render(); return;}
+  const tg=e.target.closest('[data-tog]');
+  if(tg){const k=tg.dataset.tog; S.closed[k]=!S.closed[k]; save(); render(); return;}
+  const d=e.target.closest('[data-del]');
+  if(d){S.custom=S.custom.filter(c=>c.id!==d.dataset.del); delete S.checked[d.dataset.del]; save(); render(); return;}
+});
+document.addEventListener('submit',e=>{
+  if(!e.target.matches('[data-add]')) return; e.preventDefault();
+  const inp=e.target.querySelector('input'); const v=inp.value.trim(); if(!v) return;
+  S.custom.push({id:'u'+Date.now().toString(36),t:v}); save(); render();
+  const n=document.getElementById('new-item'); n&&n.focus();
+});
+$('v-sec').onclick=()=>{S.view='sec';save();render()};
+$('v-mom').onclick=()=>{S.view='mom';save();render()};
+$('b-hide').onclick=()=>{S.hide=!S.hide;save();render()};
+
+$('b-copy').onclick=()=>{
+  const secs=build(); let txt=(S.trip.dest?'Viaje a '+S.trip.dest:'Viaje')+' — pendientes\n';
+  for(const s of secs){const p=s.groups.flatMap(g=>g.items).filter(i=>!S.checked[i.id]); if(!p.length) continue;
+    txt+='\n'+s.title.toUpperCase()+'\n'+p.map(i=>'☐ '+i.t).join('\n')+'\n';}
+  if(window.Android&&window.Android.share){window.Android.share(txt);return;}
+  const zone=$('copy-zone');
+  const fallback=()=>{zone.hidden=false; zone.innerHTML='<p class="hint">Seleccioná y copiá el texto:</p><textarea class="copybox" id="copybox" readonly></textarea>'; const ta=$('copybox'); ta.value=txt; ta.focus(); ta.select();};
+  try{navigator.clipboard.writeText(txt).then(()=>{zone.hidden=false; zone.innerHTML='<span class="toast">Pendientes copiados. Podés pegarlos en WhatsApp o en una nota.</span>'; setTimeout(()=>{zone.hidden=true},3500)},fallback)}catch(err){fallback()}
+};
+
+function resetBtn(){ $('reset-zone').innerHTML='<button class="btn" id="b-reset">Nuevo viaje</button>'; $('b-reset').onclick=askReset; }
+function askReset(){
+  $('reset-zone').innerHTML='<span class="confirm">¿Borrar datos y tildes? <button class="btn warn" id="r-yes">Sí, empezar de cero</button><button class="btn" id="r-no">Cancelar</button></span>';
+  $('r-yes').onclick=()=>{const keep={custom:S.custom,view:S.view}; S=Object.assign(fresh(),keep); save(); render(); resetBtn();};
+  $('r-no').onclick=resetBtn;
+}
+$('b-reset').onclick=askReset;
+
+render();
+})();
+</script>
+</body>
+</html>
