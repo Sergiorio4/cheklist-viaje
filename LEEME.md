@@ -20,7 +20,8 @@ Funciona sin internet y guarda las tildes en el teléfono.
 1. Creá un repositorio en https://github.com y subí el contenido de la carpeta `ChecklistViaje`
    (incluida la carpeta oculta `.github`).
 2. Entrá a la pestaña **Actions**: se ejecuta solo "Generar APK" (tarda unos 5 minutos).
-3. Al terminar, abrí la ejecución y descargá **ChecklistViaje-apk** (es un .zip con el `app-debug.apk` adentro).
+3. Al terminar, el APK queda publicado en la sección **Releases** del repositorio (también en Actions, dentro de un .zip).
+   Enlace directo a la última versión: https://github.com/Sergiorio4/cheklist-viaje/releases/latest/download/ChecklistViaje.apk
 4. Pasá el APK al teléfono e instalalo.
 
 ## Cómo modificar el contenido
